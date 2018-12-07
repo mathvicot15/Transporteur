@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Transporteur</string>
+    <string name="access_token" translatable="false">sk.eyJ1IjoibWF0aHZpY290MTUiLCJhIjoiY2pwZHdjcjVqMHl4aTNxcDgwb3NqZnlwYyJ9.vT7v4e61Qk-XpIQh6xtAfQ</string>
+    <string name="user_location_permission_explanation">Cette application nécessite les autorisations de géolocalisation pour fonctionner.</string>
+    <string name="user_location_permission_not_granted">Vous n\'avez pas autorisé la géolocalisation pour cette application</string>
 </resources>
+

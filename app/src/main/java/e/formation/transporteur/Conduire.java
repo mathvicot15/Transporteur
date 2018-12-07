@@ -35,8 +35,8 @@ public class Conduire extends AppCompatActivity {
                 Intent intent1 = new Intent(this,Conduire.class);
                 this.startActivity(intent1);
                 return true;
-            case R.id.camions :
-                Intent intent2 = new Intent(this, Conduire.class);
+            case R.id.carte :
+                Intent intent2 = new Intent(this, Carte.class);
                 this.startActivity(intent2);
                 return true;
             default:
@@ -73,7 +73,7 @@ public class Conduire extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "Il faut s'arreter", Toast.LENGTH_LONG).show();
 
                     SmsManager smsManager = SmsManager.getDefault();
-                    smsManager.sendTextMessage("0769871037", null, "Stop", null, null);
+                    smsManager.sendTextMessage("0769871037", null, "Le chauffeur s'est arrêté", null, null);
                 }
             }
 
