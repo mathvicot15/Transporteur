@@ -1,6 +1,9 @@
 package e.formation.transporteur;
 
+import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.CountDownTimer;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,6 +16,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class Conduire extends AppCompatActivity {
+
+    public static String telSiege = "+33769871037";
+    public static String telConducteur1 = "+33769871037";
+    public static String telConducteur2 = "+33769871037";
+
+    public static Double latitude;
+    public static Double longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,17 +73,21 @@ public class Conduire extends AppCompatActivity {
                 long valeur = millisUntilFinished/1000;
                 texte.setText(String.valueOf(millisUntilFinished / 1000));
 
-
                 if(valeur == 20){
 
                     cTimer.cancel();
                     TextView texte = (TextView) findViewById(R.id.txt_1);
                     texte.setText("Arret du camion");
 
+                    //Message au conducteur
                     Toast.makeText(getApplicationContext(), "Il faut s'arreter", Toast.LENGTH_LONG).show();
 
                     SmsManager smsManager = SmsManager.getDefault();
-                    smsManager.sendTextMessage("0769871037", null, "Le chauffeur s'est arrêté", null, null);
+
+                    //Message au siège
+                    smsManager.sendTextMessage(telSiege, null, "Le chauffeur s'est arrêté", null, null);
+                    //Message au conducteur2
+                    envoiCoordonnees();
                 }
             }
 
@@ -84,6 +98,26 @@ public class Conduire extends AppCompatActivity {
             }
         }.start();
 
+    }
+
+    @SuppressWarnings("MissingPermission")
+    public void envoiCoordonnees(){
+
+        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if(location == null){
+            Toast.makeText(this,"Localisation introuvable",Toast.LENGTH_LONG).show();
+        }
+        else{
+            longitude = location.getLongitude();
+            latitude = location.getLatitude();
+
+            SmsManager smsManager = SmsManager.getDefault();
+
+            smsManager.sendTextMessage(telConducteur2, null, "Coordonnées:"+String.valueOf(latitude)+","+String.valueOf(longitude), null, null);
+
+            Toast.makeText(getApplicationContext(), "Coordonnées envoyées !", Toast.LENGTH_LONG).show();
+        }
     }
 
     public void cancelTimer(View view) {

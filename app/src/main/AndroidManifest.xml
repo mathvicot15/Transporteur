@@ -3,7 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="e.formation.transporteur" >
 
-    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" ></uses-permission>
+    <uses-permission android:name="android.permission.READ_SMS" ></uses-permission>
+    <uses-permission android:name="android.permission.SEND_SMS" ></uses-permission>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
@@ -13,6 +15,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
+
         <activity android:name=".Conduire" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -20,8 +23,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name=".Carte" >
         </activity>
+
+        <receiver android:name=".SmsListener" android:permission="android.permission.BROADCAST_SMS" android:exported="true">
+            <intent-filter android:priority="5822" >
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
     </application>
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="17" />
 
 </manifest>
