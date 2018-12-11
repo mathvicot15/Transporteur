@@ -33,8 +33,9 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="128dp"
-        android:text="Arret"
-        android:onClick="cancelTimer"/>
+        android:backgroundTint="@android:color/holo_green_light"
+        android:onClick="cancelTimer"
+        android:text="Arret" />
 
 
 </RelativeLayout>

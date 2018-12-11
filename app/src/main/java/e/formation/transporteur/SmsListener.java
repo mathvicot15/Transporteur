@@ -33,10 +33,15 @@ public class SmsListener extends BroadcastReceiver {
 
                     String[] type = messageBody.split(":");
 
-                    if(phoneNumber.equals(Conduire.telConducteur1) && type[0].equals("Coordonnées:")){
+                    if(phoneNumber.equals(Conduire.telConducteur1) && type[0].equals("Coordonnées")){
                         String[] latLng = type[1].split(",");
                         latitude = latLng[0];
                         longitude = latLng[1];
+
+                        Intent carte = new Intent(context, Carte.class);
+                        carte.putExtra("latitude", this.latitude);
+                        carte.putExtra("longitude", this.longitude);
+                        context.startActivity(carte);
                     }
                 }
             }
