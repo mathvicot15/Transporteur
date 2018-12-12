@@ -91,8 +91,11 @@ public class Conduire extends AppCompatActivity {
             @Override
             public void onFinish() {
 
-                TextView texte = (TextView) findViewById(R.id.txt_1);
-                texte.setText("Appuyez sur 'Arret' pour demander un conducteur");
+                TextView texte1 = (TextView) findViewById(R.id.txt_1);
+                texte1.setText("Arret demandé");
+
+                TextView texte2 = (TextView) findViewById(R.id.txt_2);
+                texte2.setVisibility(View.VISIBLE);
 
                 //Message au conducteur
                 Toast.makeText(getApplicationContext(), "Il faut s'arreter", Toast.LENGTH_LONG).show();
@@ -142,8 +145,11 @@ public class Conduire extends AppCompatActivity {
     public void cancelTimer(View view) {
         if(cTimer!=null)
             cTimer.cancel();
-        TextView texte = (TextView) findViewById(R.id.txt_1);
-        texte.setText(String.valueOf(tempsConduite/1000));
+        TextView texte1 = (TextView) findViewById(R.id.txt_1);
+        texte1.setText(String.valueOf(tempsConduite/1000));
+
+        TextView texte2 = (TextView) findViewById(R.id.txt_2);
+        texte2.setVisibility(View.GONE);
 
         //Message au siège
         SmsManager smsManager = SmsManager.getDefault();

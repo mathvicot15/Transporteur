@@ -35,6 +35,7 @@ import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.location.LocationComponent;
 import com.mapbox.mapboxsdk.location.modes.CameraMode;
 import com.mapbox.mapboxsdk.location.modes.RenderMode;
@@ -129,7 +130,9 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
 
     @Override
     public void onLocationChanged(Location location) {
-        if(location != null){
+
+        Button btnNavigation = (Button) findViewById(R.id.btnNavigation);
+        if(location != null && btnNavigation.getVisibility() == View.GONE){
             originLocation = location;
             setCameraPosition(location);
         }
@@ -155,7 +158,7 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
     @SuppressWarnings("MissingPermission")
     @Override
     public void onMapReady(MapboxMap mapboxMap) {
-        map = mapboxMap;
+        this.map = mapboxMap;
         enableLocation();
 
         Intent intent = getIntent();
@@ -166,32 +169,49 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
             Double latitudeD = Double.parseDouble(extras.getString("latitude"));
             Double longitudeD = Double.parseDouble(extras.getString("longitude"));
 
-            //LatLng de l'utilisateur
+            //LatLng de l'origine
             LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             Double latitudeO = location.getLatitude();
             Double longitudeO = location.getLongitude();
 
             //Création de l'objet latlng par rapport à la destination
-            LatLng latLng = new LatLng();
-            latLng.setLatitude(latitudeD);
-            latLng.setLongitude(longitudeD);
+            LatLng latLngD = new LatLng(latitudeD, longitudeD);
+            LatLng latLngO = new LatLng(latitudeO, longitudeO);
 
             if(destinationMarker != null){
                 map.removeMarker(destinationMarker);
             }
             else {
-                destinationMarker = map.addMarker(new MarkerOptions().position(latLng));
 
-                originPosition = Point.fromLngLat(longitudeD, latitudeD);
-                destinationPosition = Point.fromLngLat(longitudeO, latitudeO);
+                //__Code final__
+                //destinationPosition = Point.fromLngLat(longitudeD, latitudeD);
+                //destinationMarker = map.addMarker(new MarkerOptions().position(latLngD));
+                //______________
+
+                //__Code simulation__
+                //Décommenter pour simuler une géolocalisation (Paris) - Commenter les lignes suivant "//__Code final__"
+                destinationPosition = Point.fromLngLat(2.333333, 48.866667);
+                latLngD = new LatLng(48.866667, 2.333333);
+                destinationMarker = map.addMarker(new MarkerOptions().position(latLngD));
+                //_____________
+
+                originPosition = Point.fromLngLat(longitudeO, latitudeO);
+
+                //Créer la route
+                getRoute(originPosition, destinationPosition);
+
+                //Centrer sur l'origine et la destination
+                LatLngBounds latLngBounds = new LatLngBounds.Builder()
+                        .include(latLngO)
+                        .include(latLngD)
+                        .build();
+                map.easeCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 300), 5000);
 
                 Button btnNavigation = (Button) findViewById(R.id.btnNavigation);
                 Button btnRefus = (Button) findViewById(R.id.btnRefus);
                 btnNavigation.setVisibility(View.VISIBLE);
                 btnRefus.setVisibility(View.VISIBLE);
-
-                getRoute(originPosition, destinationPosition);
 
                 btnNavigation.setOnClickListener(new View.OnClickListener(){
                     @Override
@@ -203,10 +223,11 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
                         btnNavigation.setVisibility(View.GONE);
                         btnRefus.setVisibility(View.GONE);
 
+                        //Lancer la navigation
                         NavigationLauncherOptions options = NavigationLauncherOptions.builder()
                                 .origin(originPosition)
                                 .destination(destinationPosition)
-                                .shouldSimulateRoute(false)
+                                .shouldSimulateRoute(true)
                                 .build();
                         NavigationLauncher.startNavigation(Carte.this, options);
                     }
@@ -218,6 +239,7 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
                         btnNavigation.setVisibility(View.GONE);
                         btnRefus.setVisibility(View.GONE);
 
+                        map.removeMarker(destinationMarker);
                         navigationMapRoute.removeRoute();
                     }
                 });
@@ -227,7 +249,7 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
 
     private void getRoute(Point origin, Point destination){
         NavigationRoute.builder()
-                .accessToken(getString(R.string.access_token))
+                .accessToken(Mapbox.getAccessToken())
                 .origin(origin)
                 .destination(destination)
                 .build()
