@@ -33,7 +33,7 @@ public class SmsListener extends BroadcastReceiver {
 
                     String[] type = messageBody.split(":");
 
-                    if(phoneNumber.equals(Conduire.telConducteur1) && type[0].equals("Coordonnées")){
+                    if(phoneNumber.equals(Config.telConducteur1) && type[0].equals("Coordonnées")){
                         String[] latLng = type[1].split(",");
                         latitude = latLng[0];
                         longitude = latLng[1];

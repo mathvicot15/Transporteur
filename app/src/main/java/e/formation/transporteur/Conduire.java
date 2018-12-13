@@ -20,11 +20,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class Conduire extends AppCompatActivity {
-
-    public static String telSiege = "+33769871037";
-    public static String telConducteur1 = "+33769871037";
-    public static String telConducteur2 = "+33769871037";
+public class Conduire extends AppCompatActivity{
 
     private Double latitude;
     private Double longitude;
@@ -53,21 +49,25 @@ public class Conduire extends AppCompatActivity {
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()){
-            case R.id.conduire :
-                Intent intent1 = new Intent(this,Conduire.class);
-                this.startActivity(intent1);
-                return true;
-            case R.id.carte :
-                Intent intent2 = new Intent(this, Carte.class);
-                this.startActivity(intent2);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            switch(item.getItemId()){
+                case R.id.conduire :
+                    Intent intent1 = new Intent(this,Conduire.class);
+                    this.startActivity(intent1);
+                    return true;
+                case R.id.carte :
+                    Intent intent2 = new Intent(this, Carte.class);
+                    this.startActivity(intent2);
+                    return true;
+                case R.id.config :
+                    Intent intent3 = new Intent(this, Config.class);
+                    this.startActivity(intent3);
+                    return true;
+                default:
+                    return super.onOptionsItemSelected(item);
+            }
         }
-    }
 
     CountDownTimer cTimer = null;
 
@@ -105,7 +105,7 @@ public class Conduire extends AppCompatActivity {
                 SmsManager smsManager = SmsManager.getDefault();
 
                 //Message au siège
-                smsManager.sendTextMessage(telSiege, null, "Le chauffeur doit s'arreter", null, null);
+                smsManager.sendTextMessage(Config.telSiege, null, "Le chauffeur doit s'arreter", null, null);
             }
         }.start();
 
@@ -137,7 +137,7 @@ public class Conduire extends AppCompatActivity {
             latitude = location.getLatitude();
 
             SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(telConducteur2, null, "Coordonnées:"+String.valueOf(latitude)+","+String.valueOf(longitude), null, null);
+            smsManager.sendTextMessage(Config.telConducteur2, null, "Coordonnées:"+String.valueOf(latitude)+","+String.valueOf(longitude), null, null);
             Toast.makeText(getApplicationContext(), "Coordonnées envoyées !", Toast.LENGTH_LONG).show();
         }
     }
@@ -153,7 +153,7 @@ public class Conduire extends AppCompatActivity {
 
         //Message au siège
         SmsManager smsManager = SmsManager.getDefault();
-        smsManager.sendTextMessage(telSiege, null, "Le chauffeur s'est arrêté", null, null);
+        smsManager.sendTextMessage(Config.telSiege, null, "Le chauffeur s'est arrêté", null, null);
 
         //Message au conducteur2
         envoiCoordonnees();

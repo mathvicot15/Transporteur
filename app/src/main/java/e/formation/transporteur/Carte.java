@@ -101,6 +101,10 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
                 Intent intent2 = new Intent(this, Carte.class);
                 this.startActivity(intent2);
                 return true;
+            case R.id.config :
+                Intent intent3 = new Intent(this, Config.class);
+                this.startActivity(intent3);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -189,7 +193,7 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
 
                         //Message au conducteur
                         SmsManager smsManager = SmsManager.getDefault();
-                        smsManager.sendTextMessage(Conduire.telConducteur1, null, "Un conducteur est en chemin", null, null);
+                        smsManager.sendTextMessage(Config.telConducteur1, null, "Un conducteur est en chemin", null, null);
 
                         //Gerer l'affichage des boutons
                         Button btnArretNavigation = (Button) findViewById(R.id.btnArretNavigation);

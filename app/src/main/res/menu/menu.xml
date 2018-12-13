@@ -6,5 +6,8 @@
         app:showAsAction="ifRoom" />
     <item android:id="@+id/carte"
         android:title="Carte"
-        app:showAsAction="ifRoom" />/>
+        app:showAsAction="ifRoom" />
+    <item android:id="@+id/config"
+        android:title="Config"
+        app:showAsAction="ifRoom" />
 </menu>
