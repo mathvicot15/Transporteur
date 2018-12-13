@@ -27,12 +27,14 @@ import com.mapbox.android.core.location.LocationEnginePriority;
 import com.mapbox.android.core.location.LocationEngineProvider;
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
+import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.models.DirectionsResponse;
 import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
@@ -67,6 +69,7 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
     private Point destinationPosition;
     private Marker destinationMarker;
     private NavigationMapRoute navigationMapRoute;
+    private DirectionsRoute currentRoute;
     private static final String TAG = "MainActivity";
 
     @Override
@@ -132,6 +135,7 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
     public void onLocationChanged(Location location) {
 
         Button btnNavigation = (Button) findViewById(R.id.btnNavigation);
+        Button btnArretNavigation = (Button) findViewById(R.id.btnArretNavigation);
         if(location != null && btnNavigation.getVisibility() == View.GONE){
             originLocation = location;
             setCameraPosition(location);
@@ -208,6 +212,7 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
                         .build();
                 map.easeCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 300), 5000);
 
+                //Gerer l'affichage des boutons
                 Button btnNavigation = (Button) findViewById(R.id.btnNavigation);
                 Button btnRefus = (Button) findViewById(R.id.btnRefus);
                 btnNavigation.setVisibility(View.VISIBLE);
@@ -220,16 +225,31 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
                         //Message au conducteur
                         SmsManager smsManager = SmsManager.getDefault();
                         smsManager.sendTextMessage(Conduire.telConducteur1, null, "Un conducteur est en chemin", null, null);
+
+                        //Gerer l'affichage des boutons
+                        Button btnArretNavigation = (Button) findViewById(R.id.btnArretNavigation);
+                        btnArretNavigation.setVisibility(View.VISIBLE);
                         btnNavigation.setVisibility(View.GONE);
                         btnRefus.setVisibility(View.GONE);
 
-                        //Lancer la navigation
-                        NavigationLauncherOptions options = NavigationLauncherOptions.builder()
-                                .origin(originPosition)
-                                .destination(destinationPosition)
-                                .shouldSimulateRoute(true)
+                        CameraPosition position = new CameraPosition.Builder()
+                                .target(latLngO)
+                                .zoom(16)
+                                .bearing(180)
+                                .tilt(30)
                                 .build();
-                        NavigationLauncher.startNavigation(Carte.this, options);
+
+                        mapboxMap.animateCamera(CameraUpdateFactory
+                                .newCameraPosition(position), 7000);
+
+                        btnArretNavigation.setOnClickListener(new View.OnClickListener(){
+                            @Override
+                            public void onClick(View v){
+                                btnArretNavigation.setVisibility(View.GONE);
+                                map.removeMarker(destinationMarker);
+                                navigationMapRoute.removeRoute();
+                            }
+                        });
                     }
                 });
 
@@ -259,12 +279,11 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
                         if(response.body() == null){
                             Toast.makeText(getApplicationContext(),"Aucune direction n'a été trouvée, vérifiez les autorisations de l'application",Toast.LENGTH_LONG).show();
                             return;
-                        } else if(response.body().routes().size() == 0){
-                            Toast.makeText(getApplicationContext(),"Aucune direction n'a été trouvée pour cette destination",Toast.LENGTH_LONG).show();
+                        } else if(response.body().routes().size() == 0) {
+                            Toast.makeText(getApplicationContext(), "Aucune direction n'a été trouvée pour cette destination", Toast.LENGTH_LONG).show();
                             return;
                         }
-
-                        DirectionsRoute currentRoute = response.body().routes().get(0);
+                        currentRoute = response.body().routes().get(0);
 
                         if(navigationMapRoute != null){
                             navigationMapRoute.removeRoute();
