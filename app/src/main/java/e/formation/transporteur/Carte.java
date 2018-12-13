@@ -84,6 +84,257 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
     };
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()){
+            case R.id.conduire :
+                Intent intent1 = new Intent(this,Conduire.class);
+                this.startActivity(intent1);
+                return true;
+            case R.id.carte :
+                Intent intent2 = new Intent(this, Carte.class);
+                this.startActivity(intent2);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+
+        Button btnNavigation = (Button) findViewById(R.id.btnNavigation);
+        if(location != null && btnNavigation.getVisibility() == View.GONE){
+            originLocation = location;
+            setCameraPosition(location);
+        }
+    }
+
+    @SuppressWarnings("MissingPermission")
+    @Override
+    public void onMapReady(MapboxMap mapboxMap) {
+        this.map = mapboxMap;
+        enableLocation();
+
+        //Si l'utilisateur à été redirigé sur la carte suite à la reception du sms
+        Intent intent = getIntent();
+        if(intent.hasExtra("latitude")){
+
+            //Récuperer les paramètres de redirection
+            Bundle extras = intent.getExtras();
+
+            //LatLng de la destination
+            Double latitudeD = Double.parseDouble(extras.getString("latitude"));
+            Double longitudeD = Double.parseDouble(extras.getString("longitude"));
+
+            //LatLng de l'origine
+            LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Double latitudeO = location.getLatitude();
+            Double longitudeO = location.getLongitude();
+
+            //Création de l'objet latlng par rapport à la destination
+            LatLng latLngD = new LatLng(latitudeD, longitudeD);
+            LatLng latLngO = new LatLng(latitudeO, longitudeO);
+
+            if(destinationMarker != null){
+                map.removeMarker(destinationMarker);
+            }
+            else {
+
+                //Origine
+                originPosition = Point.fromLngLat(longitudeO, latitudeO);
+
+                //Destination
+
+                //__Code final__
+                destinationPosition = Point.fromLngLat(longitudeD, latitudeD);
+                //______________
+
+                //__Code simulation__
+                //Décommenter pour simuler une géolocalisation (Paris) - Commenter les lignes suivant "//__Code final__"
+                //destinationPosition = Point.fromLngLat(2.333333, 48.866667);
+                //latLngD = new LatLng(48.866667, 2.333333);
+                //___________________
+
+                //Ajouter le marqueur du point de destination
+                destinationMarker = map.addMarker(new MarkerOptions().position(latLngD));
+
+                //Créer la route
+                getRoute(originPosition, destinationPosition);
+
+                //Centrer sur l'origine et la destination
+                LatLngBounds latLngBounds = new LatLngBounds.Builder()
+                        .include(latLngO)
+                        .include(latLngD)
+                        .build();
+                map.easeCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 300), 5000);
+
+                //Gerer l'affichage des boutons
+                Button btnNavigation = (Button) findViewById(R.id.btnNavigation);
+                Button btnRefus = (Button) findViewById(R.id.btnRefus);
+                btnNavigation.setVisibility(View.VISIBLE);
+                btnRefus.setVisibility(View.VISIBLE);
+
+                //Gerer le click sur le bouton de démarrage de la navigation
+                btnNavigation.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View v){
+
+                        //Message au conducteur
+                        SmsManager smsManager = SmsManager.getDefault();
+                        smsManager.sendTextMessage(Conduire.telConducteur1, null, "Un conducteur est en chemin", null, null);
+
+                        //Gerer l'affichage des boutons
+                        Button btnArretNavigation = (Button) findViewById(R.id.btnArretNavigation);
+                        btnArretNavigation.setVisibility(View.VISIBLE);
+                        btnNavigation.setVisibility(View.GONE);
+                        btnRefus.setVisibility(View.GONE);
+
+                        //Centrer la camera sur la position de l'utilisateur
+                        CameraPosition position = new CameraPosition.Builder()
+                                .target(latLngO)
+                                .zoom(16)
+                                .bearing(180)
+                                .tilt(30)
+                                .build();
+
+                        mapboxMap.animateCamera(CameraUpdateFactory
+                                .newCameraPosition(position), 7000);
+
+                        //Gerer le click sur le bouton d'arret de la navigation
+                        btnArretNavigation.setOnClickListener(new View.OnClickListener(){
+                            @Override
+                            public void onClick(View v){
+
+                                //Affichage du bouton
+                                btnArretNavigation.setVisibility(View.GONE);
+
+                                //Supprimer la route et le marqueur de destination
+                                map.removeMarker(destinationMarker);
+                                navigationMapRoute.removeRoute();
+                            }
+                        });
+                    }
+                });
+
+                //Gerer le click sur le bouton de refus du trajet
+                btnRefus.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View v){
+
+                        //Affichage des boutons
+                        btnNavigation.setVisibility(View.GONE);
+                        btnRefus.setVisibility(View.GONE);
+
+                        //Supprimer la route et le marqueur de destination
+                        map.removeMarker(destinationMarker);
+                        navigationMapRoute.removeRoute();
+                    }
+                });
+            }
+        }
+    }
+
+    private void getRoute(Point origin, Point destination){
+        NavigationRoute.builder()
+                .accessToken(Mapbox.getAccessToken())
+                .origin(origin)
+                .destination(destination)
+                .build()
+                .getRoute(new Callback<DirectionsResponse>() {
+                    @Override
+                    public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
+                        if(response.body() == null){
+                            Toast.makeText(getApplicationContext(),"Aucune direction n'a été trouvée, vérifiez les autorisations de l'application",Toast.LENGTH_LONG).show();
+                            return;
+                        } else if(response.body().routes().size() == 0) {
+                            Toast.makeText(getApplicationContext(), "Aucune direction n'a été trouvée pour cette destination", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        currentRoute = response.body().routes().get(0);
+
+                        if(navigationMapRoute != null){
+                            navigationMapRoute.removeRoute();
+                        } else{
+                            navigationMapRoute = new NavigationMapRoute(null, mapView, map);
+                        }
+                        navigationMapRoute.addRoute(currentRoute);
+                    }
+                    @Override
+                    public void onFailure(Call<DirectionsResponse> call, Throwable t) {
+                        Log.e(TAG, "Erreur : "+t.getMessage());
+                    }
+                });
+    }
+
+    private void setCameraPosition(Location location){
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 16));
+    }
+
+    @SuppressWarnings("MissingPermission")
+    private void enableLocation(){
+        if(PermissionsManager.areLocationPermissionsGranted(this)){
+            initializeLocationEngine();
+            LocationComponent locationComponent = map.getLocationComponent();
+            locationComponent.activateLocationComponent(this);
+            locationComponent.setRenderMode(RenderMode.GPS);
+            locationComponent.setLocationComponentEnabled(true);
+            //initializeLocationLayer();
+
+        } else {
+            permissionsManager = new PermissionsManager(this);
+            permissionsManager.requestLocationPermissions(this);
+        }
+    }
+
+    @SuppressWarnings("MissingPermission")
+    private void initializeLocationEngine(){
+        locationEngine = new LocationEngineProvider(this).obtainBestLocationEngineAvailable();
+        locationEngine.setPriority(LocationEnginePriority.HIGH_ACCURACY);
+        locationEngine.activate();
+
+        Location lastLocation = locationEngine.getLastLocation();
+        if(lastLocation != null){
+            originLocation = lastLocation;
+            setCameraPosition(lastLocation);
+        } else {
+            locationEngine.addLocationEngineListener(this);
+        }
+    }
+
+    @SuppressWarnings("MissingPermission")
+    private void initializeLocationLayer(){
+        locationLayerPlugin = new LocationLayerPlugin(mapView, map, locationEngine);
+        locationLayerPlugin.setLocationLayerEnabled(true);
+        locationLayerPlugin.setCameraMode(CameraMode.TRACKING);
+        locationLayerPlugin.setRenderMode(RenderMode.NORMAL);
+    }
+
+    @Override
+    public void onExplanationNeeded(List<String> permissionsToExplain) {
+        //Present toast or dialog.
+    }
+
+    @Override
+    public void onPermissionResult(boolean granted) {
+        if(granted){
+            enableLocation();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
         mapView.onStart();
@@ -129,240 +380,5 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
     @Override
     public void onConnected() {
         locationEngine.requestLocationUpdates();
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-
-        Button btnNavigation = (Button) findViewById(R.id.btnNavigation);
-        Button btnArretNavigation = (Button) findViewById(R.id.btnArretNavigation);
-        if(location != null && btnNavigation.getVisibility() == View.GONE){
-            originLocation = location;
-            setCameraPosition(location);
-        }
-    }
-
-    @Override
-    public void onExplanationNeeded(List<String> permissionsToExplain) {
-        //Present toast or dialog.
-    }
-
-    @Override
-    public void onPermissionResult(boolean granted) {
-        if(granted){
-            enableLocation();
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
-    @SuppressWarnings("MissingPermission")
-    @Override
-    public void onMapReady(MapboxMap mapboxMap) {
-        this.map = mapboxMap;
-        enableLocation();
-
-        Intent intent = getIntent();
-        if(intent.hasExtra("latitude")){
-
-            Bundle extras = intent.getExtras();
-            //LatLng de la destination
-            Double latitudeD = Double.parseDouble(extras.getString("latitude"));
-            Double longitudeD = Double.parseDouble(extras.getString("longitude"));
-
-            //LatLng de l'origine
-            LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            Double latitudeO = location.getLatitude();
-            Double longitudeO = location.getLongitude();
-
-            //Création de l'objet latlng par rapport à la destination
-            LatLng latLngD = new LatLng(latitudeD, longitudeD);
-            LatLng latLngO = new LatLng(latitudeO, longitudeO);
-
-            if(destinationMarker != null){
-                map.removeMarker(destinationMarker);
-            }
-            else {
-
-                //__Code final__
-                //destinationPosition = Point.fromLngLat(longitudeD, latitudeD);
-                //destinationMarker = map.addMarker(new MarkerOptions().position(latLngD));
-                //______________
-
-                //__Code simulation__
-                //Décommenter pour simuler une géolocalisation (Paris) - Commenter les lignes suivant "//__Code final__"
-                destinationPosition = Point.fromLngLat(2.333333, 48.866667);
-                latLngD = new LatLng(48.866667, 2.333333);
-                destinationMarker = map.addMarker(new MarkerOptions().position(latLngD));
-                //_____________
-
-                originPosition = Point.fromLngLat(longitudeO, latitudeO);
-
-                //Créer la route
-                getRoute(originPosition, destinationPosition);
-
-                //Centrer sur l'origine et la destination
-                LatLngBounds latLngBounds = new LatLngBounds.Builder()
-                        .include(latLngO)
-                        .include(latLngD)
-                        .build();
-                map.easeCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 300), 5000);
-
-                //Gerer l'affichage des boutons
-                Button btnNavigation = (Button) findViewById(R.id.btnNavigation);
-                Button btnRefus = (Button) findViewById(R.id.btnRefus);
-                btnNavigation.setVisibility(View.VISIBLE);
-                btnRefus.setVisibility(View.VISIBLE);
-
-                btnNavigation.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View v){
-
-                        //Message au conducteur
-                        SmsManager smsManager = SmsManager.getDefault();
-                        smsManager.sendTextMessage(Conduire.telConducteur1, null, "Un conducteur est en chemin", null, null);
-
-                        //Gerer l'affichage des boutons
-                        Button btnArretNavigation = (Button) findViewById(R.id.btnArretNavigation);
-                        btnArretNavigation.setVisibility(View.VISIBLE);
-                        btnNavigation.setVisibility(View.GONE);
-                        btnRefus.setVisibility(View.GONE);
-
-                        CameraPosition position = new CameraPosition.Builder()
-                                .target(latLngO)
-                                .zoom(16)
-                                .bearing(180)
-                                .tilt(30)
-                                .build();
-
-                        mapboxMap.animateCamera(CameraUpdateFactory
-                                .newCameraPosition(position), 7000);
-
-                        btnArretNavigation.setOnClickListener(new View.OnClickListener(){
-                            @Override
-                            public void onClick(View v){
-                                btnArretNavigation.setVisibility(View.GONE);
-                                map.removeMarker(destinationMarker);
-                                navigationMapRoute.removeRoute();
-                            }
-                        });
-                    }
-                });
-
-                btnRefus.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View v){
-                        btnNavigation.setVisibility(View.GONE);
-                        btnRefus.setVisibility(View.GONE);
-
-                        map.removeMarker(destinationMarker);
-                        navigationMapRoute.removeRoute();
-                    }
-                });
-            }
-        }
-    }
-
-    private void getRoute(Point origin, Point destination){
-        NavigationRoute.builder()
-                .accessToken(Mapbox.getAccessToken())
-                .origin(origin)
-                .destination(destination)
-                .build()
-                .getRoute(new Callback<DirectionsResponse>() {
-                    @Override
-                    public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
-                        if(response.body() == null){
-                            Toast.makeText(getApplicationContext(),"Aucune direction n'a été trouvée, vérifiez les autorisations de l'application",Toast.LENGTH_LONG).show();
-                            return;
-                        } else if(response.body().routes().size() == 0) {
-                            Toast.makeText(getApplicationContext(), "Aucune direction n'a été trouvée pour cette destination", Toast.LENGTH_LONG).show();
-                            return;
-                        }
-                        currentRoute = response.body().routes().get(0);
-
-                        if(navigationMapRoute != null){
-                            navigationMapRoute.removeRoute();
-                        } else{
-                            navigationMapRoute = new NavigationMapRoute(null, mapView, map);
-                        }
-                        navigationMapRoute.addRoute(currentRoute);
-                    }
-                    @Override
-                    public void onFailure(Call<DirectionsResponse> call, Throwable t) {
-                        Log.e(TAG, "Erreur : "+t.getMessage());
-                    }
-                });
-    }
-
-    @SuppressWarnings("MissingPermission")
-    private void enableLocation(){
-        if(PermissionsManager.areLocationPermissionsGranted(this)){
-            initializeLocationEngine();
-            LocationComponent locationComponent = map.getLocationComponent();
-            locationComponent.activateLocationComponent(this);
-            locationComponent.setRenderMode(RenderMode.GPS);
-            locationComponent.setLocationComponentEnabled(true);
-            //initializeLocationLayer();
-
-        } else {
-            permissionsManager = new PermissionsManager(this);
-            permissionsManager.requestLocationPermissions(this);
-        }
-    }
-
-    @SuppressWarnings("MissingPermission")
-    private void initializeLocationEngine(){
-        locationEngine = new LocationEngineProvider(this).obtainBestLocationEngineAvailable();
-        locationEngine.setPriority(LocationEnginePriority.HIGH_ACCURACY);
-        locationEngine.activate();
-
-        Location lastLocation = locationEngine.getLastLocation();
-        if(lastLocation != null){
-            originLocation = lastLocation;
-            setCameraPosition(lastLocation);
-        } else {
-            locationEngine.addLocationEngineListener(this);
-        }
-    }
-
-    @SuppressWarnings("MissingPermission")
-    private void initializeLocationLayer(){
-        locationLayerPlugin = new LocationLayerPlugin(mapView, map, locationEngine);
-        locationLayerPlugin.setLocationLayerEnabled(true);
-        locationLayerPlugin.setCameraMode(CameraMode.TRACKING);
-        locationLayerPlugin.setRenderMode(RenderMode.NORMAL);
-    }
-
-    private void setCameraPosition(Location location){
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 16));
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()){
-            case R.id.conduire :
-                Intent intent1 = new Intent(this,Conduire.class);
-                this.startActivity(intent1);
-                return true;
-            case R.id.carte :
-                Intent intent2 = new Intent(this, Carte.class);
-                this.startActivity(intent2);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
     }
 }
