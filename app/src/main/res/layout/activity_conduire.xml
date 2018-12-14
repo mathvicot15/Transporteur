@@ -22,9 +22,22 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="220dp"
+        android:layout_marginTop="240dp"
         android:text="30"
-        android:textSize="80px" />
+        android:textSize="60px"
+        android:gravity="center"/>
+
+    <TextView
+        android:id="@+id/txt_2"
+        android:layout_width="342dp"
+        android:layout_height="113dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="23dp"
+        android:gravity="center"
+        android:text="Appuyez sur 'Arret' pour signaler votre arret"
+        android:textSize="30sp"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/btn_2"
@@ -33,8 +46,9 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="128dp"
-        android:text="Arret"
-        android:onClick="cancelTimer"/>
+        android:backgroundTint="@android:color/holo_green_light"
+        android:onClick="cancelTimer"
+        android:text="Arret" />
 
 
 </RelativeLayout>
