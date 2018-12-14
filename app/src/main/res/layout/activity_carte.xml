@@ -54,15 +54,21 @@
         android:id="@+id/btnArretNavigation"
         android:layout_width="97dp"
         android:layout_height="56dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="22dp"
+        android:layout_marginBottom="16dp"
         android:backgroundTint="@color/colorPrimaryDark"
         android:text="Stopper la navigation"
         android:textColor="@color/mapboxWhite"
         android:textSize="18px"
         android:visibility="gone"
+        mapbox:layout_constraintBottom_toTopOf="@+id/mapView"
+        mapbox:layout_constraintEnd_toStartOf="@+id/mapView"
+        mapbox:layout_constraintHorizontal_bias="0.04"
         mapbox:layout_constraintStart_toStartOf="parent"
-        mapbox:layout_constraintTop_toTopOf="parent" />
+        mapbox:layout_constraintTop_toTopOf="parent"
+        mapbox:layout_constraintVertical_bias="0.04000002" />
 
 </android.support.constraint.ConstraintLayout>
 

@@ -69,6 +69,7 @@ public class Config extends AppCompatActivity {
 
         //Selection du message d'erreur
         TextView txtMsgErreur = (TextView)findViewById(R.id.msgErreur);
+        txtMsgErreur.setVisibility(View.GONE);
 
         //Récuperation des données dans les champs et traitement pour le format +33
         telSiege = txtTelSiege.getText().toString();

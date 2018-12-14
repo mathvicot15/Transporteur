@@ -36,6 +36,7 @@ import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.mapboxsdk.constants.Style;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.location.LocationComponent;
@@ -47,6 +48,7 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin;
 import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
 import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
+import com.mapbox.services.android.navigation.ui.v5.NavigationViewOptions;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 
@@ -62,7 +64,6 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
     private MapboxMap map;
     private PermissionsManager permissionsManager;
     private LocationEngine locationEngine;
-    private LocationLayerPlugin locationLayerPlugin;
     private LocationComponent locationcomponent;
     private Location originLocation;
     private Point originPosition;
@@ -204,13 +205,15 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
                         //Centrer la camera sur la position de l'utilisateur
                         CameraPosition position = new CameraPosition.Builder()
                                 .target(latLngO)
-                                .zoom(16)
-                                .bearing(180)
-                                .tilt(30)
+                                .zoom(18)
+                                .bearing(0)
+                                .tilt(60)
                                 .build();
 
                         mapboxMap.animateCamera(CameraUpdateFactory
                                 .newCameraPosition(position), 7000);
+
+                        mapboxMap.setStyleUrl(Style.MAPBOX_STREETS);
 
                         //Gerer le click sur le bouton d'arret de la navigation
                         btnArretNavigation.setOnClickListener(new View.OnClickListener(){
@@ -223,6 +226,7 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
                                 //Supprimer la route et le marqueur de destination
                                 map.removeMarker(destinationMarker);
                                 navigationMapRoute.removeRoute();
+                                mapboxMap.setStyleUrl(Style.LIGHT);
                             }
                         });
                     }
@@ -279,7 +283,7 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
     }
 
     private void setCameraPosition(Location location){
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 16));
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18));
     }
 
     @SuppressWarnings("MissingPermission")
@@ -313,13 +317,6 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
         }
     }
 
-    @SuppressWarnings("MissingPermission")
-    private void initializeLocationLayer(){
-        locationLayerPlugin = new LocationLayerPlugin(mapView, map, locationEngine);
-        locationLayerPlugin.setLocationLayerEnabled(true);
-        locationLayerPlugin.setCameraMode(CameraMode.TRACKING);
-        locationLayerPlugin.setRenderMode(RenderMode.NORMAL);
-    }
 
     @Override
     public void onExplanationNeeded(List<String> permissionsToExplain) {

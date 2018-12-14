@@ -24,7 +24,7 @@ public class Conduire extends AppCompatActivity{
 
     private Double latitude;
     private Double longitude;
-    public int tempsConduite = 10000;
+    private int tempsConduite = 10000;
 
     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, "Notification")
             .setSmallIcon(R.drawable.warning)
