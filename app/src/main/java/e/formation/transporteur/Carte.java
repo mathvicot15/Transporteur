@@ -202,18 +202,16 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
                         btnNavigation.setVisibility(View.GONE);
                         btnRefus.setVisibility(View.GONE);
 
-                        //Centrer la camera sur la position de l'utilisateur
+                        //Centrer la camera sur la position de l'utilisateur avec un certain angle
                         CameraPosition position = new CameraPosition.Builder()
                                 .target(latLngO)
                                 .zoom(18)
                                 .bearing(0)
-                                .tilt(60)
+                                .tilt(30)
                                 .build();
 
                         mapboxMap.animateCamera(CameraUpdateFactory
-                                .newCameraPosition(position), 7000);
-
-                        mapboxMap.setStyleUrl(Style.MAPBOX_STREETS);
+                                .newCameraPosition(position), 5000);
 
                         //Gerer le click sur le bouton d'arret de la navigation
                         btnArretNavigation.setOnClickListener(new View.OnClickListener(){
@@ -226,7 +224,17 @@ public class Carte extends AppCompatActivity implements OnMapReadyCallback, Loca
                                 //Supprimer la route et le marqueur de destination
                                 map.removeMarker(destinationMarker);
                                 navigationMapRoute.removeRoute();
-                                mapboxMap.setStyleUrl(Style.LIGHT);
+
+                                //Centrer la camera sur la position de l'utilisateur et remettre l'angle de base
+                                CameraPosition position = new CameraPosition.Builder()
+                                        .target(latLngO)
+                                        .zoom(18)
+                                        .bearing(0)
+                                        .tilt(0)
+                                        .build();
+
+                                mapboxMap.animateCamera(CameraUpdateFactory
+                                        .newCameraPosition(position));
                             }
                         });
                     }
